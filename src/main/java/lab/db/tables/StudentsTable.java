@@ -47,10 +47,10 @@ public final class StudentsTable implements Table<Student, Integer> {
 
 	@Override
 	public Optional<Student> findByPrimaryKey(final Integer id) {
-		final String query = "SELECT * FROM " + TABLE_NAME + " WHERE ID=?";
+		final String query = "SELECT * FROM " + TABLE_NAME + " WHERE id=?";
 		try (final PreparedStatement statement = this.connection.prepareStatement(query)) {
 			statement.setInt(1, id);
-			final var result = statement.executeQuery(query);
+			final var result = statement.executeQuery();
 			/*
 			 * try(final Statement statement = this.connection.createStatement()){ final var
 			 * result=statement.executeQuery("SELECT * FROM "+TABLE_NAME+" WHERE ID="+id);
@@ -88,7 +88,7 @@ public final class StudentsTable implements Table<Student, Integer> {
 			try {
 				while (resultSet.next()) {
 					list.add(new Student(resultSet.getInt("id"), resultSet.getString("firstName"),
-							resultSet.getString("lastName"), Optional.of(Utils.sqlDateToDate(resultSet.getDate("birthday")))));
+							resultSet.getString("lastName"), Optional.ofNullable(Utils.sqlDateToDate(resultSet.getDate("birthday")))));
 
 				}
 			} catch (SQLException e) {
@@ -110,6 +110,14 @@ public final class StudentsTable implements Table<Student, Integer> {
 
 	@Override
 	public boolean dropTable() {
+		final String query = "DROP TABLE " + TABLE_NAME;
+		try (final PreparedStatement statement = this.connection.prepareStatement(query)) {
+			statement.executeUpdate(query);
+			return true;
+		} catch (final SQLException e) {
+			// 3. Handle possible SQLExceptions
+			return false;
+		}
 		
 	}
 
@@ -120,9 +128,9 @@ public final class StudentsTable implements Table<Student, Integer> {
 			statement.setInt(1, student.getId());
 			statement.setString(2, student.getFirstName());
 			statement.setString(3, student.getLastName());
-			statement.setDate(4, Utils.dateToSqlDate(student.getBirthday().orElseGet(null)));
-			statement.executeQuery(query);
-			return true;
+			statement.setDate(4, Utils.dateToSqlDate(student.getBirthday().orElse(null)));
+			final var r=statement.executeUpdate();
+			return r==1;
 		} catch (final SQLException e) {
 			// 3. Handle possible SQLExceptions
 			return false;
