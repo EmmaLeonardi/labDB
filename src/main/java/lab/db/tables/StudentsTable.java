@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -101,11 +100,26 @@ public final class StudentsTable implements Table<Student, Integer> {
 
 	@Override
 	public List<Student> findAll() {
-		throw new UnsupportedOperationException("TODO");
+		final String query = "SELECT * FROM " + TABLE_NAME;
+		try (final PreparedStatement statement = this.connection.prepareStatement(query)) {
+			final var result = statement.executeQuery();
+			return readStudentsFromResultSet(result);
+		} catch (final SQLException e) {
+			// 3. Handle possible SQLExceptions
+			return new ArrayList<>();
+		}
 	}
 
 	public List<Student> findByBirthday(final Date date) {
-		throw new UnsupportedOperationException("TODO");
+		final String query = "SELECT * FROM " + TABLE_NAME + " WHERE birthday=?";
+		try (final PreparedStatement statement = this.connection.prepareStatement(query)) {
+			statement.setDate(1, Utils.dateToSqlDate(date));
+			final var result = statement.executeQuery();
+			return readStudentsFromResultSet(result);
+		} catch (final SQLException e) {
+			// 3. Handle possible SQLExceptions
+			return new ArrayList<>();
+		}
 	}
 
 	@Override
@@ -139,11 +153,30 @@ public final class StudentsTable implements Table<Student, Integer> {
 
 	@Override
 	public boolean delete(final Integer id) {
-		throw new UnsupportedOperationException("TODO");
+		final String query = "DELETE FROM " + TABLE_NAME + " WHERE id=?";
+		try (final PreparedStatement statement = this.connection.prepareStatement(query)) {
+			statement.setInt(1, id);
+			final var r = statement.executeUpdate();
+			return r==1;
+		} catch (final SQLException e) {
+			// 3. Handle possible SQLExceptions
+			return false;
+		}
 	}
 
 	@Override
 	public boolean update(final Student student) {
-		throw new UnsupportedOperationException("TODO");
+		final String query = "UPDATE " + TABLE_NAME + " SET id=? firstName=? lastName=? birthday=?";
+		try (final PreparedStatement statement = this.connection.prepareStatement(query)) {
+			statement.setInt(1, student.getId());
+			statement.setString(2, student.getFirstName());
+			statement.setString(3, student.getLastName());
+			statement.setDate(4, Utils.dateToSqlDate(student.getBirthday().orElse(null)));
+			final var r = statement.executeUpdate();
+			return r==1;
+		} catch (final SQLException e) {
+			// 3. Handle possible SQLExceptions
+			return false;
+		}
 	}
 }
