@@ -166,12 +166,13 @@ public final class StudentsTable implements Table<Student, Integer> {
 
 	@Override
 	public boolean update(final Student student) {
-		final String query = "UPDATE " + TABLE_NAME + " SET id=? firstName=? lastName=? birthday=?";
+		final String query = "UPDATE " + TABLE_NAME + " SET id=?, firstName=?, lastName=?, birthday=? WHERE id=?";
 		try (final PreparedStatement statement = this.connection.prepareStatement(query)) {
 			statement.setInt(1, student.getId());
 			statement.setString(2, student.getFirstName());
 			statement.setString(3, student.getLastName());
 			statement.setDate(4, Utils.dateToSqlDate(student.getBirthday().orElse(null)));
+			statement.setInt(5, student.getId());
 			final var r = statement.executeUpdate();
 			return r==1;
 		} catch (final SQLException e) {
